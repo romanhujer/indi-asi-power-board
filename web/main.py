@@ -5,7 +5,7 @@
 #
 #   Version 1.0
 #
-#   Copyright (c) 2019 Roman Hujer   http://hujer.net
+#   Copyright (c) 2022 Roman Hujer   http://hujer.net
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -32,8 +32,7 @@ import math
 import sys 
 import trace 
 import threading 
-import mysqm
-import sqmrrd
+import libAsiPwr
 import time 
 
 from bottle import Bottle, route, run, template, static_file, get, post, request
@@ -50,7 +49,8 @@ print pkg_path
 # default settings
 
 WEB_HOST = '0.0.0.0'
-WEB_PORT = 8080
+WEB_PORT = 80
+CFG_FILE = '/home/pi/.asi_pwr.cfg'
 
 daemon_exit_flag = False
 lock_serial_port = False
@@ -59,11 +59,12 @@ debug = True
 
 parser = argparse.ArgumentParser(description='myASi-pwr'
                                 'A simple web application to manage ASI-PWR-board')
-
 parser.add_argument('--port', '-P', type=int, default=WEB_PORT,
                     help='web server port (default: %d)' % WEB_PORT)
 parser.add_argument('--host', '-H', default=WEB_HOST,
                     help='bind web server to this interface (default: %s)' % WEB_HOST)
+parser.add_argument('--config', '-c', default=CFG_FILE,
+                    help='config file (default %s)' % CFG_FILE)
 parser.add_argument('--verbose', '-v', action='store_true',
                     help='print more messages')
 parser.add_argument('--logfile', '-l', help='log file name')
@@ -77,7 +78,7 @@ app = Bottle()
 logging.info('using Bottle as standalone server')
 
 #
-serial_port = args.com
+cfg_file = args.config
 
 
 # 
@@ -90,55 +91,40 @@ class pwrThread(threading.Thread):
     daemon_exit_flag = False
   
   def run(self): 
-    print "Thread Starting" + self.name
-    sqm_daemon(self.name)
-    print "Thread Stop" + self.name
+    print "Thread Starting: " + self.name
+    pwr_daemon(self.name)
+    print "Thread Stop: " + self.name
 
   def stop(self): 
     daemon_exit_flag = True
 
-def sqm_daemon(threadName): 
+def pwr_daemon(threadName): 
     daemon_exit_flag = False
+    pwr.beep(4)
     while not daemon_exit_flag:
-      try:         
-        if  myrrd.sqm.open_ser :
-            if not  myrrd.lock_serial : 
-                myrrd.read_sqm_current_data()
-                time.sleep(15)
-            else:   
-                if myrrd.debug :
-                     print "sqm_daemon() serial port is lock"
-                     time.sleep(1)
- 
-        else:
-            if myrrd.debug :
-                print "sqm_daemon() wiat serial port open" 
-                time.sleep(1)
-      except:
-        print "sqm_daemon() Serial port error"
-        myrrd.sqm.open_ser = False
-        myrrd.lock_serial = False
+        pwr.power_cycle()
     threadName.exit()
      
 
 #
 # Init my class defaut is com open and debug off
 #
-sqm = mysqm.MySQM(port=serial_port,debug=debug) 
-#
-# Init MySQMMrrd class
-#
-myrrd = sqmrrd.MySQMrrd(port=serial_port, database=rrd_database, debug=debug )
+pwr = libAsiPwr.ASiPWR(debug=debug)
 
-if  not os.path.exists(rrd_database) :
-    print "Create new rrd database"
-    myrrd.create_database()
+#
+# Init class
+#
+
+if  not os.path.exists(cfg_file): 
+    print "Create new cfg_file: " + cfg_file
+    pwr.write_cfg(cfg=cfg_file)
 else : 
-    print "Use old rrd database"
+    print "Use old cfg_file: " + cfg_file
+    pwr.read_cfg(cfg=cfg_file)
 
 
-print "SQM daemon starting"  
-mydaemon = sqmThread(sqm_daemon)
+print "PWR demon starting"  
+mydaemon = pwrThread('pwrD') 
 mydaemon.start()
 print "OK"
 
@@ -146,60 +132,18 @@ print "OK"
 #
 # Web pages rendering
 #
-def init_page():
-    return template( os.path.join(views_path, 'init.tpl'),
-                     ports =  ports,
-                     port = 'none'
-                   )
 
 #
 # Main page
 #
 def main_page():
-    return template( os.path.join(views_path, 'main.tpl'), 
-                        port1  = '%03d' % myrrd.mpsas, 
-                        port2  = '%03d' % myrrd.dmpsas,
-                        port3  = '%03d' % myrrd.ir,
-                        port4  = '%03d' % myrrd.vis, 
-                    )
-                    
-
-
-def config_page():
-    def _on_off(c):
-        if (c == 1 ):
-            return 'On'
-        else:
-            return 'Off'
-    
-    def _yes_no(c):
-        if (c == 'Y'):
-            return 'Yes'
-        else: 
-            return 'No'
-    while myrrd.lock_serial :
-        if debug :
-            print "config_page() serial is lock"
-            time.sleep(1)
-    myrrd.lock_serial = True
-    s = sqm.read_config().split(',')
-    myrrd.lock_serial = False
-    m_offset = float(s[1].split('m')[0])
-    t_offest = float(s[2].split('C')[0])
-    tc       = s[3].split(':')[1]
-    oled     = int(s[5][0:1])
-    dimmer   = int(s[5][1:2])
-    contras  = int(s[6].split(':')[1])
-    return template( os.path.join(views_path, 'config.tpl'),
-                        moffset  = m_offset,
-                        moffset_s  = '%6.2f' % m_offset,
-                        toffset  =  t_offest,
-                        toffset_s  = '%5.1f' % t_offest,
-                        tc       = _yes_no(tc),
-                        oled     = _on_off(oled),
-                        dimmer   = _on_off(dimmer),
-                        contras  = '%d' % contras
-                    )
+    pwr.read_cfg(cfg=cfg_file)
+    return template( os.path.join(views_path, 'main.tpl'),
+        pt1 = '%03d' % pwr._p1_cfg,
+        pt2 = '%03d' % pwr._p2_cfg,
+        pt3 = '%03d' % pwr._p3_cfg,
+        pt4 = '%03d' % pwr._p4_cfg,
+        ckl = '%04d' % pwr._power_cycle )
 
 #
 # Web pages routing 
@@ -219,44 +163,26 @@ def get_favicon():
 @app.route('/')
 @app.route('/main')
 def main(): 
-    """main page"""
-         return template( os.path.join(views_path, 'wait.tpl'))
-        return main_page()
-    return init_page()
+   """main page"""
+   return main_page()            
+ 
 
 @app.route('/main', method='POST') 
 def do_main():
-    form_id=request.forms.get('id')
-    print form_id
-    if form_id == 'port1':
-        oled_off = int(request.forms.get('sled'))
-        
+   """do main"""
+   form_id=request.forms.get('id')
+   print "Form ID:" + form_id
+   if form_id == 'p1': 
+      pwr._p1_cfg = int(request.forms.get('npt1'))
+   if form_id == 'p2':
+      pwr._p2_cfg = int(request.forms.get('npt2'))
+   if form_id == 'p3':
+      pwr._p3_cfg = int(request.forms.get('npt3'))
+   if form_id == 'p4':
+      pwr._p4_cfg = int(request.forms.get('npt4'))
+   pwr.write_cfg(cfg=cfg_file)
+   return main_page()
 
-@app.route('/DSLRtimer')
-def info():
-    """info page"""
-    return info_page()
-
-@app.route('/DSLRtimer', method='POST')
-def do_info():
-    """info page"""
-    form_id=request.forms.get('id')
-    if form_id == 'contras':
-        sqm.set_oled_contras(int(request.forms.get('scontras')))
-    return info_page()
-
- 
-@app.route('/config')
-def config():
-   """config page"""	
-   return config_page()
-
- 
-@app.route('/config', method='POST')
-def do_config():
-    """config page"""
-    form_id=request.forms.get('id')
-    return config_page()
 
 
 ###############################################################################

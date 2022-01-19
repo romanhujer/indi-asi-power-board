@@ -1,12 +1,12 @@
 [Unit]
-Description=SQM Web Manager
+Description=PWR Manager
 After=multi-user.target
 
 [Service]
 Type=idle
 # MUST SET YOUR USERNAME HERE.
 User=pi
-ExecStart=/home/pi/sqmrrdweb/sqm_start.sh
+ExecStart=/home/pi/web/pwr_start.sh
 Restart=always
 RestartSec=5
 

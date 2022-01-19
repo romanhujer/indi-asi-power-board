@@ -6,13 +6,13 @@
   <link rel="stylesheet" href="static/my.css" >
 </head>
 
-<title>SQM Web Manager</title>
+<title>PWR Manager</title>
 </head>
 
 <body bgcolor='#26262A'>
 <div class='t'>
 <table width='100%%'><tr><td><b><font size='5'>
-Sky Quality Meter web manager</font></b></td><td align='right'><b>TSL2591 and BME280 sensors</b>
+PWR  web manager</font></b></td><td align='right'>
 </td></tr>
 </table>
 </div >
@@ -32,82 +32,77 @@ var now = new Date();
 </script>
 <br />
 <br />
-<b>SQM</>
 <br />
 <table width='100%%'>
-<tr>
-<td>
-<div style='width:17em;'>
-<br />
-&nbsp;&nbsp;Sky quality: <font class='c'>{{mpsas}}&#xb1;{{dmpsas}} </font> Mag/ArcSec&#xb2;<br />
-&nbsp;&nbsp;Temperature: <font class='c'>{{temperature}}</font>&deg;C<br />
-&nbsp;&nbsp;Barometric Pressure: <font class='c'>{{pressure}}</font>hPa<br />
-&nbsp;&nbsp;Relative Humidity: <font class='c'>{{humidity}}</font>%<br />
-&nbsp;&nbsp;Dew Point Temperature: <font class='c'>{{dewpoint}} </font>&deg;C<br />
-&nbsp;&nbsp;Count: <font class='c'>{{count}}</font><br />
-</div>
-<td>
-<a href="/longtimegraph"><img src=static/sqm.png></a>
-<tr>
-<td>&nbsp;<td>
+
+<tr><td>
 <form action="/main" method="POST">
-<input type="hidden" name="id" value="graph">
-<table>
-<tr>
-<td>1 hours: 
-%if start_time == '-1h':
- <input type="radio"  name="graph" value="-1h" checked >
-%else:
- <input type="radio"  name="graph" value="-1h">
-%end
-<td>3 hours:
-%if start_time == '-3h':
- <input type="radio"  name="graph" value="-3h" checked>
-%else: 
- <input type="radio"  name="graph" value="-3h">
-%end
-<td>8 hours:
-%if start_time == '-8h':  
-  <input type="radio"  name="graph" value="-8h" checked>
-%else:
-  <input type="radio"  name="graph" value="-8h">
-%end
-<td>Long time:
- <input type="radio"  name="graph" value="long">
-<tr>
-</table>
- <button type="submit">Change graph</button>
+<input type="hidden"  name="id" value="p1">
+PORT 1:<td><font class='c'>{{pt1}}</font><td><input class="slider" type="range" min="0" max="100" 
+value={{pt1}} id="npt1" name="npt1"><td>&nbsp;
+<td><font class='c'><span id="opt1"></span></font>
+<td>&nbsp;<td><input type="submit" value="SET">
 </form>
-</table>
-<br />
-<br />
-<!--
-<b>RAW Data</b>
-<br />
-<br />
-&nbsp;&nbsp;Full:<font class='c'>{{full}}</font><br />
-&nbsp;&nbsp;Vis: <font class='c'>{{vis}}</font><br />
-&nbsp;&nbsp;Ir : <font class='c'>{{ir}}</font><br />
-
-<br />
--->
-
-<form action='/main' method='POST'>
-<input type="hidden" name="id" value="oled">
-&nbsp;&nbsp; OLED Display is:
-%if oled == '1':
-  <input type="hidden"  name="sled" value=0>
-  <font class='c'>ON &nbsp; </font> &nbsp; <input type="submit" value="OFF">
-%else:
-  <input type="hidden"  name="sled" value=1>
-  <font class='c'>OFF</font> &nbsp; <input type="submit" value="ON">
-%end
+<tr><td>
+<form action="/main" method="POST">
+<input type="hidden"  name="id" value="p2">
+PORT 2 <td><font class='c'>{{pt2}}</font><td><input class="slider" type="range" min="0" max="100" 
+value={{pt2}} id="npt2" name="npt2"><td>&nbsp;
+<td><font class='c'><span id="opt2"></span></font>
+<td>&nbsp;<td><input type="submit" value="SET">
 </form>
-
+<tr><td>
+<form action="/main" method="POST">
+<input type="hidden" name="id" value="p3">
+PORT 3:<td><font class='c'>{{pt3}}</font><td><input class="slider" type="range" min="0" max="100" 
+value={{pt3}} id="npt3" name="npt3"><td>&nbsp;
+<td><font class='c'><span id="opt3"></span></font>
+<td>&nbsp;<td><input type="submit" value="SET">
+</form>
+<tr><td>
+<form action="/main" method="POST">
+<input type="hidden" name="id" value="p4">
+PORT 4:<td><font class='c'>{{pt4}}</font><td><input class="slider" type="range" min="0" max="100" 
+value={{pt4}} id="npt4" name="npt4"><td>&nbsp;
+<td><font class='c'><span id="opt4"></span></font>
+<td>&nbsp;<td><input type="submit" value="SET">
+</form>
+</table> 
 </div>
 <br />
-<a href='/main'style='background-color: #552222;'>Home</a>
-<a href='/info'>Box Info</a>
-<a href='/config' >Configuration</a>
+
+<script>
+var slider1 = document.getElementById("npt1");
+var output1 = document.getElementById("opt1");
+output1.innerHTML = slider1.value;
+slider1.oninput = function() {
+  output1.innerHTML = this.value;
+}
+</script>
+<script>
+var slider2 = document.getElementById("npt2");
+var output2 = document.getElementById("opt2");
+output2.innerHTML = slider2.value;
+slider2.oninput = function() {
+  output2.innerHTML = this.value;
+}
+</script>
+<script>
+var slider3 = document.getElementById("npt3");
+var output3 = document.getElementById("opt3");
+output3.innerHTML = slider3.value;
+slider3.oninput = function() {
+  output3.innerHTML = this.value;
+}
+</script>
+<script>
+var slider4 = document.getElementById("npt4");
+var output4 = document.getElementById("opt4");
+output4.innerHTML = slider4.value;
+slider4.oninput = function() {
+  output4.innerHTML = this.value;
+}
+</script>
+
 </body>
 </html>

@@ -56,7 +56,8 @@ class  ASiPWR:
 
     def __init__(self, debug=False ) :
        """__init__"""  
-       GPIO.setwarnings(debug)
+#       GPIO.setwarnings(debug)
+       GPIO.setwarnings(False) 
        GPIO.setmode(GPIO.BCM)
        GPIO.setup(self.port1, GPIO.OUT)
        GPIO.setup(self.port2, GPIO.OUT)
@@ -125,13 +126,20 @@ class  ASiPWR:
                 continue
         self.PortOFF(self.BUZZER)
 
-    def power_cycle(self, p1_load=_p1_cfg, p2_load=_p2_cfg, p3_load=_p3_cfg, p4_load=_p4_cfg, cycle_t=_power_cycle):
-        """beep"""  
-        self._p1_cfg = p1_load
-        self._p2_cfg = p2_load
-        self._p3_cfg = p3_load
-        self._p4_cfg = p4_load
-        self._power_cycle = cycle_t
+    def power_cycle(self, debug=False):
+        """power cycle"""  
+        self.read_cfg()
+        p1_load = self._p1_cfg
+        p2_load = self._p2_cfg
+        p3_load = self._p3_cfg
+        p4_load = self._p4_cfg
+        cycle_t = self._power_cycle
+        if debug: 
+            print "L1 %03d" % p1_load
+            print "L2 %03d" % p2_load
+            print "L3 %03d" % p3_load
+            print "L4 %03d" % p4_load
+            print "C2 %06d" % cycle_t
         sleep_t = cycle_t / 200000.
         init_ms = int(time.time() * 1000)
         end_time = init_ms + cycle_t - 1
@@ -196,7 +204,5 @@ class  ASiPWR:
         self._p2_cfg = int(s[1].split(':') [1])
         self._p3_cfg = int(s[2].split(':') [1])
         self._p4_cfg = int(s[3].split(':') [1])
-        self._power_cycle = int(s[4].split(':') [1])
-
         
 

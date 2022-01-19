@@ -1,7 +1,8 @@
 #!/bin/bash
 
 
-cd /home/pi/sqmrrdweb
+cd /home/pi/web
 
-sudo ./main.py   1>/tmp/sqm.log 2>&1
 
+#sudo ./test.py   1>/tmp/pwr.log 2>&1
+sudo ./main.py   1>/tmp/pwr.log 2>&1
