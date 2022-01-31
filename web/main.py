@@ -41,19 +41,12 @@ from bottle import Bottle, route, run, template, static_file, get, post, request
 views_path ='views' 
 
 pkg_path = os.path.split(os.path.abspath(__file__))
-print pkg_path
-#views_path = os.path.join(pkg_path, 'views')
-
-
 
 # default settings
 
 WEB_HOST = '0.0.0.0'
 WEB_PORT = 80
 CFG_FILE = '/home/pi/.asi_pwr.cfg'
-
-daemon_exit_flag = False
-lock_serial_port = False
 
 debug = True
 
@@ -65,6 +58,8 @@ parser.add_argument('--host', '-H', default=WEB_HOST,
                     help='bind web server to this interface (default: %s)' % WEB_HOST)
 parser.add_argument('--config', '-c', default=CFG_FILE,
                     help='config file (default %s)' % CFG_FILE)
+parser.add_argument('--dslr', '-d', default='N',
+                   help='DSLR timer only [Y|N](default N)')
 parser.add_argument('--verbose', '-v', action='store_true',
                     help='print more messages')
 parser.add_argument('--logfile', '-l', help='log file name')
@@ -81,52 +76,58 @@ logging.info('using Bottle as standalone server')
 cfg_file = args.config
 
 
-# 
-#  Define sqm Thread daemon
 #
-class pwrThread(threading.Thread):
-  def __init__(self, name): 
-    threading.Thread.__init__(self) 
-    self.name = name
-    daemon_exit_flag = False
-  
-  def run(self): 
-    print "Thread Starting: " + self.name
-    pwr_daemon(self.name)
-    print "Thread Stop: " + self.name
-
-  def stop(self): 
-    daemon_exit_flag = True
-
-def pwr_daemon(threadName): 
-    daemon_exit_flag = False
-    pwr.beep(4)
-    while not daemon_exit_flag:
-        pwr.power_cycle()
-    threadName.exit()
-     
-
-#
-# Init my class defaut is com open and debug off
+# Init my libAsiPwr class 
 #
 pwr = libAsiPwr.ASiPWR(debug=debug)
 
+
+# 
+#  Define sqm Thread daemon
 #
-# Init class
+class pwr_Thread(threading.Thread):
+    def __init__(self): 
+        threading.Thread.__init__(self) 
+
+    def run(self): 
+        print "PWR Thread Starting"
+        pwr.beep(4)
+        while True :
+            pwr.power_cycle()
+        print "PWR Thread Stop"
+
+
+class DSLR_Thread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        print "DSLR Thred Starting"
+        pwr.dslr_timer_stop()
+        while True :
+            if pwr._r_dslr :
+                pwr.dslr_timer_start()
+                pwr.beep(4)
+            time.sleep(1)
+        print "DSLR Thred Stop"
+
+
 #
+# Init 
+#
+if args.dslr == 'N'  :
+    if  not os.path.exists(cfg_file): 
+        print "Create new cfg_file: " + cfg_file
+        pwr.write_cfg(cfg=cfg_file)
+    else : 
+        print "Used cfg_file: " + cfg_file
+        pwr.read_cfg(cfg=cfg_file)
+    main_daemon = pwr_Thread() 
+    main_daemon.start()
 
-if  not os.path.exists(cfg_file): 
-    print "Create new cfg_file: " + cfg_file
-    pwr.write_cfg(cfg=cfg_file)
-else : 
-    print "Use old cfg_file: " + cfg_file
-    pwr.read_cfg(cfg=cfg_file)
 
-
-print "PWR demon starting"  
-mydaemon = pwrThread('pwrD') 
-mydaemon.start()
-print "OK"
+dslr_daemon = DSLR_Thread()
+dslr_daemon.start()
 
 
 #
@@ -139,15 +140,13 @@ print "OK"
 def main_page():
     pwr.read_cfg(cfg=cfg_file)
     return template( os.path.join(views_path, 'main.tpl'),
-        pt1 = '%03d' % pwr._p1_cfg,
-        pt2 = '%03d' % pwr._p2_cfg,
-        pt3 = '%03d' % pwr._p3_cfg,
-        pt4 = '%03d' % pwr._p4_cfg,
-        ckl = '%04d' % pwr._power_cycle )
+        pt1 = '%3d' % pwr._p1_cfg,
+        pt2 = '%3d' % pwr._p2_cfg,
+        pt3 = '%3d' % pwr._p3_cfg,
+        pt4 = '%3d' % pwr._p4_cfg,
+        ckl = '%4d' % pwr._power_cycle )
 
-#
-# Web pages routing 
-#
+
 
 @app.route('/static/<path:path>')
 def callback(path):
@@ -156,22 +155,23 @@ def callback(path):
 
 @app.route('/favicon.ico', method='GET')
 def get_favicon():
-    """Serve favicon"""
+    """Favicon"""
     return static_file('favicon.ico', root=views_path)
 
 
 @app.route('/')
 @app.route('/main')
 def main(): 
-   """main page"""
-   return main_page()            
+    """main page"""
+    if args.dslr == 'Y'   :
+        return dslr_page()
+    return main_page()            
  
 
 @app.route('/main', method='POST') 
 def do_main():
    """do main"""
    form_id=request.forms.get('id')
-   print "Form ID:" + form_id
    if form_id == 'p1': 
       pwr._p1_cfg = int(request.forms.get('npt1'))
    if form_id == 'p2':
@@ -183,6 +183,36 @@ def do_main():
    pwr.write_cfg(cfg=cfg_file)
    return main_page()
 
+#
+# DSLR tiner page
+#
+def dslr_page():
+    return template(os.path.join(views_path, 'dslr.tpl'),
+        exptime = pwr.dslr_exptime,
+        wait = pwr.dslr_wait,
+        count = pwr.dslr_count,
+        i_exptime =  pwr.dslr_exptime - pwr._c_exptime,
+        i_wait = pwr.dslr_wait - pwr._c_wait,
+        i_count = pwr.dslr_count - pwr._c_count,
+        running = pwr._r_dslr,
+        dslr = args.dslr 
+        )
+
+@app.route('/dslr')
+def dslr():
+    return dslr_page()
+
+@app.route('/dslr', method='POST')
+def do_dslr():
+    form_id=request.forms.get('id')
+    if form_id == 'timer' :
+        pwr.dslr_count = int(request.forms.get('icount'))
+        pwr.dslr_exptime = int( request.forms.get('iexptime'))
+        pwr.dslr_wait = int(request.forms.get('iwait'))
+        pwr._r_dslr = True
+    if form_id == 'stop' : 
+        pwr.dslr_timer_stop()
+    return dslr_page()   
 
 
 ###############################################################################

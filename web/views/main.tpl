@@ -12,14 +12,14 @@
 <body bgcolor='#26262A'>
 <div class='t'>
 <table width='100%%'><tr><td><b><font size='5'>
-PWR  web manager</font></b></td><td align='right'>
+PWR Web manager</font></b></td><td align='right'>
 </td></tr>
 </table>
 </div >
 <div class='b'>
 <br />
 <div style='width: 40em;'>
-&nbsp;&nbsp;Time:<font class='c'><span id='datetime'></span></font> 
+<span id='datetime'></span>
 <script> 
 function pad(num, size) { var s = '000000000' + num; return s.substr(s.length-size); }
 var now = new Date(); 
@@ -37,40 +37,35 @@ var now = new Date();
 
 <tr><td>
 <form action="/main" method="POST">
-<input type="hidden"  name="id" value="p1">
-PORT 1:<td><font class='c'>{{pt1}}</font><td><input class="slider" type="range" min="0" max="100" 
-value={{pt1}} id="npt1" name="npt1"><td>&nbsp;
-<td><font class='c'><span id="opt1"></span></font>
+<input type="hidden"  name="id" value="p1">PORT 1:<td>{{pt1}} %
+<td><input class="slider" type="range" min="0" max="100" value={{pt1}} id="npt1" name="npt1"><td>&nbsp;
+<td><font class='c'><span id="opt1"> </span></font>
 <td>&nbsp;<td><input type="submit" value="SET">
 </form>
-<tr><td>
-<form action="/main" method="POST">
-<input type="hidden"  name="id" value="p2">
-PORT 2 <td><font class='c'>{{pt2}}</font><td><input class="slider" type="range" min="0" max="100" 
-value={{pt2}} id="npt2" name="npt2"><td>&nbsp;
+<tr>
+<td><form action="/main" method="POST">
+<input type="hidden"  name="id" value="p2">PORT 2 <td>{{pt2}} %
+<td><input class="slider" type="range" min="0" max="100" value={{pt2}} id="npt2" name="npt2"><td>&nbsp;
 <td><font class='c'><span id="opt2"></span></font>
 <td>&nbsp;<td><input type="submit" value="SET">
 </form>
-<tr><td>
-<form action="/main" method="POST">
-<input type="hidden" name="id" value="p3">
-PORT 3:<td><font class='c'>{{pt3}}</font><td><input class="slider" type="range" min="0" max="100" 
-value={{pt3}} id="npt3" name="npt3"><td>&nbsp;
+<tr>
+<td><form action="/main" method="POST">
+<input type="hidden" name="id" value="p3">PORT 3:<td>{{pt3}} %
+<td><input class="slider" type="range" min="0" max="100" value={{pt3}} id="npt3" name="npt3"><td>&nbsp;
 <td><font class='c'><span id="opt3"></span></font>
 <td>&nbsp;<td><input type="submit" value="SET">
 </form>
-<tr><td>
-<form action="/main" method="POST">
-<input type="hidden" name="id" value="p4">
-PORT 4:<td><font class='c'>{{pt4}}</font><td><input class="slider" type="range" min="0" max="100" 
-value={{pt4}} id="npt4" name="npt4"><td>&nbsp;
+<tr>
+<td><form action="/main" method="POST">
+<input type="hidden" name="id" value="p4">PORT 4:<td>{{pt4}} %
+<td><input class="slider" type="range" min="0" max="100" value={{pt4}} id="npt4" name="npt4"><td>&nbsp;
 <td><font class='c'><span id="opt4"></span></font>
 <td>&nbsp;<td><input type="submit" value="SET">
 </form>
 </table> 
 </div>
 <br />
-
 <script>
 var slider1 = document.getElementById("npt1");
 var output1 = document.getElementById("opt1");
@@ -103,6 +98,6 @@ slider4.oninput = function() {
   output4.innerHTML = this.value;
 }
 </script>
-
+<a href='/dslr'>DSLR Timer</a>
 </body>
 </html>

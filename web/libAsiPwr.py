@@ -39,6 +39,16 @@ class  ASiPWR:
     port3 = 26
     port4 = 18
     DSLR = 21
+
+    dslr_count = 10 
+    dslr_exptime = 30
+    dslr_wait = 5
+    _c_exptime = 0
+    _c_count = 0
+    _c_wain = 0
+    _r_dslr = False
+
+    
     BUZZER = 19
     LED = 20
     _led_on = False
@@ -53,6 +63,8 @@ class  ASiPWR:
     _p2_on = False
     _p3_on = False
     _p4_on = False
+    _first_dslr_run = True;
+  
 
     def __init__(self, debug=False ) :
        """__init__"""  
@@ -205,4 +217,39 @@ class  ASiPWR:
         self._p3_cfg = int(s[2].split(':') [1])
         self._p4_cfg = int(s[3].split(':') [1])
         
+
+    def shut_start(self):
+        """shut_start"""
+        GPIO.output(self.DSLR, GPIO.HIGH)
+    
+    def shut_stop(self):
+        """"shut_stop"""
+        GPIO.output(self.DSLR, GPIO.LOW)
+
+
+    def dslr_timer_start(self):
+        """dslr_timer_start"""
+        self._c_count = self.dslr_count
+        while (self._c_count > 0 )  and self._r_dslr :
+            self._c_count -= 1
+            self._c_exptime = self.dslr_exptime 
+            self._c_wait =  self.dslr_wait
+            self.shut_start()
+            while (self._c_exptime > 0) and self._r_dslr :
+                self._c_exptime -= 1
+                time.sleep(1)
+            self.shut_stop()
+            while (self._c_wait > 0)  and self._r_dslr :
+                self._c_wait -= 1
+                time.sleep(1)
+            self.beep(1)
+        self._r_dslr = False
+
+
+    def dslr_timer_stop(self):
+        """dslr_timer_stop"""
+        self._c_count = 0
+        self._c_exptime = 0
+        self._c_wait = 0
+        self._r_dslr = False
 
