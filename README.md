@@ -4,4 +4,6 @@ My RPi ASI POWER Clone board for Astronomy  compatible with [indi-asi-power](htt
  Wiring diagram and PCB on [EesyEDA](https://easyeda.com/hujer.roman/rpi-asi-power-clone)
 
 
- TODO   Web controll interface  for  ASiair (RPi 3) version 
+Web controll interface  for  ASiair (RPi 3) version.  
+
+This web interface can be used in DSLR timer only mode on  ASiair Pro  for controll exposure on more DSLR marks.  
