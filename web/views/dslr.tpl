@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-%if not running :
-  <meta http-equiv="refresh" content="15; URL=/dslr">
-%else:
+%if running :
   <meta http-equiv="refresh" content="2; URL=/dslr">
+%else:
+  <meta http-equiv="refresh" content="120; URL=/dslr">
 %end
   <link rel="stylesheet" href="static/my.css" >
 </head>
@@ -63,7 +63,7 @@ var now = new Date();
   <tr>
   <td width=140>Exposure number<td width=10>:<td width=70><font class='c'><b>{{i_count}}</b></font><td width=20>of<td width=10>:<td>{{count}}
   <tr> 
-  <td>Duratino (sec.)<td>:<td><font class='c'><b>{{i_exptime}}</b></font><td>of<td>:<td>{{exptime}} 
+  <td>Duration (sec.)<td>:<td><font class='c'><b>{{i_exptime}}</b></font><td>of<td>:<td>{{exptime}} 
   <tr>
   <td>Delay(sec.)<td>:<td><font class='c'><b>{{i_wait}}</b></font><td>of<td>:<td>{{wait}}  
   <tr>
